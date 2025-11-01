@@ -1,6 +1,7 @@
 # main.py
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
+from urllib.parse import unquote
 import uvicorn
 
 app = FastAPI(
@@ -11,16 +12,9 @@ app = FastAPI(
 
 @app.get("/", response_class=HTMLResponse)
 async def greet_user(name: str = "Recruto", message: str = "Давай дружить"):
-    """
-    Приветствует пользователя с переданными параметрами
-    
-    Args:
-        name: Имя для приветствия (по умолчанию "Recruto")
-        message: Сообщение (по умолчанию "Давай дружить")
-    """
+    # FastAPI автоматически декодирует %20 в пробелы!
     greeting = f"Hello {name}! {message}!"
     
-    # Возвращаем красивый HTML ответ
     html_content = f"""
     <!DOCTYPE html>
     <html>
@@ -29,72 +23,54 @@ async def greet_user(name: str = "Recruto", message: str = "Давай друж�
         <style>
             body {{
                 font-family: Arial, sans-serif;
-                max-width: 800px;
-                margin: 0 auto;
-                padding: 20px;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                min-height: 100vh;
-                display: flex;
-                align-items: center;
-                justify-content: center;
+                margin: 40px;
+                background: #f0f2f5;
             }}
-            .greeting-card {{
+            .greeting {{
                 background: white;
-                padding: 40px;
-                border-radius: 15px;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-                text-align: center;
-            }}
-            h1 {{
-                color: #333;
-                font-size: 2.5em;
-                margin-bottom: 20px;
-            }}
-            .highlight {{
-                color: #667eea;
-                font-weight: bold;
-            }}
-            .parameters {{
-                margin-top: 30px;
-                padding: 20px;
-                background: #f8f9fa;
+                padding: 30px;
                 border-radius: 10px;
-                text-align: left;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                text-align: center;
             }}
             .url-example {{
                 background: #e9ecef;
                 padding: 10px;
                 border-radius: 5px;
                 font-family: monospace;
-                margin-top: 10px;
+                margin: 10px 0;
             }}
         </style>
     </head>
     <body>
-        <div class="greeting-card">
-            <h1>Hello <span class="highlight">{name}</span>! <span class="highlight">{message}</span>!</h1>
+        <div class="greeting">
+            <h1>{greeting}</h1>
+            <p><strong>Полученные параметры:</strong></p>
+            <p>name: {name}</p>
+            <p>message: {message}</p>
             
-            <div class="parameters">
-                <h3>Параметры запроса:</h3>
-                <p><strong>name:</strong> {name}</p>
-                <p><strong>message:</strong> {message}</p>
+            <div style="margin-top: 30px; text-align: left;">
+                <h3>Правильные форматы ссылок:</h3>
                 
-                <h3>Примеры использования:</h3>
                 <div class="url-example">
-                    /?name=Recruto&message=Давай дружить
+                    /?name=Recruto&message=Давай%20дружить
                 </div>
+                
                 <div class="url-example">
-                    /?name=John&message=Welcome
+                    /?name=Recruto&message=Давай+дружить
                 </div>
-                <div class="url-example">
-                    /?name=Мир&message=Привет
-                </div>
+                
+                <p>Или используйте форму ниже:</p>
+                <form method="get">
+                    <input type="text" name="name" value="{name}" placeholder="Имя">
+                    <input type="text" name="message" value="{message}" placeholder="Сообщение" style="width: 200px;">
+                    <button type="submit">Отправить</button>
+                </form>
             </div>
         </div>
     </body>
     </html>
     """
-    
     return HTMLResponse(content=html_content)
 
 @app.get("/api/greet")
@@ -121,4 +97,5 @@ if __name__ == "__main__":
         host="0.0.0.0",  # Доступ снаружи
         port=8000,
         reload=True  # Автоперезагрузка при изменениях
+
     )
